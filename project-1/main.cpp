@@ -175,25 +175,17 @@ void task3_brute_force_search() {
     }
 }
 
-
-void task3_karp_rabin_simd() {
+int karp_rabin_search(char *str, size_t s_len, char *substr, size_t sub_len) {
 // Karp-Rabin algorithm with weak hashing
-
-    char str[STRING_LEN + 1];
-    char substr[SUBSTRING_LEN + 1];
-
-    gen_random_string(&str[0], (int) STRING_LEN);
-    gen_random_substring(&str[0], STRING_LEN + 1, &substr[0], SUBSTRING_LEN + 1);
-
-//    first and last characters in substring
+    //    first and last characters in substring
     const __m128i first = _mm_set1_epi8(substr[0]);
-    const __m128i last = _mm_set1_epi8(substr[SUBSTRING_LEN - 1]);
+    const __m128i last = _mm_set1_epi8(substr[sub_len - 1]);
 
 //    iterate over searching string in 16 bytes chunks
-    for (size_t i = 0; i < STRING_LEN; i += 16) {
+    for (size_t i = 0; i < s_len; i += 16) {
 
         const __m128i block_first = _mm_loadu_si128((__m128i *) (&str[0] + i));
-        const __m128i block_last = _mm_loadu_si128((__m128i *) (&str[0] + i + SUBSTRING_LEN - 1));
+        const __m128i block_last = _mm_loadu_si128((__m128i *) (&str[0] + i + sub_len - 1));
 
         const __m128i eq_first = _mm_cmpeq_epi8(first, block_first);
         const __m128i eq_last = _mm_cmpeq_epi8(last, block_last);
@@ -206,13 +198,26 @@ void task3_karp_rabin_simd() {
             int bitpos = __builtin_ctzl(mask);
 
 
-            if (memcmp(str + i + bitpos + 1, substr + 1, SUBSTRING_LEN - 2) == 0) {
-                return;
+            if (memcmp(str + i + bitpos + 1, substr + 1, sub_len - 2) == 0) {
+                return bitpos;
             }
 //            clear most significant bit in mask
             mask = (uint16_t) (mask & (mask - 1));
         }
     }
+    return -1;
+}
+
+
+void task3_karp_rabin_simd() {
+
+    char str[STRING_LEN + 1];
+    char substr[SUBSTRING_LEN + 1];
+
+    gen_random_string(&str[0], (int) STRING_LEN);
+    gen_random_substring(&str[0], STRING_LEN + 1, &substr[0], SUBSTRING_LEN + 1);
+
+    karp_rabin_search(&str[0], STRING_LEN, &substr[0], SUBSTRING_LEN);
 }
 
 
@@ -239,6 +244,12 @@ int main() {
     timeit(&task3_brute_force_search, NTIMES, "Task 3: brute force search");
     srand(SEED);
     timeit(&task3_karp_rabin_simd, NTIMES, "Task 3: Karp-Rabin simd");
+    printf("--------------------\n");
+    char str1[] = "XYZAVKLRPZA";
+    char str2[] = "ZA";
+    int index = karp_rabin_search(&str1[0], sizeof(str1) - 1, &str2[0], sizeof(str2) - 1);
+    printf("str1 = '%s'\t str2 = '%s'\t index = %i\n", str1, str2, index);
+
 
     return 0;
 }
