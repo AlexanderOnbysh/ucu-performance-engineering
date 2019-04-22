@@ -1,6 +1,6 @@
 # Project 1
 
-Implemented using vectorization [link](Intrinsics https://software.intel.com/sites/landingpage/IntrinsicsGuide/):
+Implemented using vectorization [Intrinsics](https://software.intel.com/sites/landingpage/IntrinsicsGuide/):
 
 ## Task 1
 `A * B + C * D`, where `A, B, C, D` are vectors of the same length (arrays).
